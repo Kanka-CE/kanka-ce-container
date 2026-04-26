@@ -1,0 +1,146 @@
+#!/usr/bin/env bash
+
+# ---------------------------------------------------------------------
+# 
+# Copyright (C) 2026 @Sebastian Kinnewig
+#
+# This file is part of the Kanka CE toolchain.
+# It is NOT part of the official Kanka project and is not affiliated
+# with or endorsed by the Kanka developers.
+#
+# The code in this file is licensed under the GNU Lesser General
+# Public License v2.1 (LGPL-2.1) as published by the Free Software
+# Foundation.
+#
+# The full text of the license can be found in the file LICENSE.md.
+#
+# ---------------------------------------------------------------------
+
+# ++============================================================++
+# ||                         Premilaris                         ||
+# ++============================================================++
+set -e
+
+TOOLS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$TOOLS_ROOT/core/lib.sh"
+
+
+
+# ++============================================================++
+# ||                       Parse arguments                      ||
+# ++============================================================++
+parse_arguments() {
+  # Parse command line arguments
+  while [[ $# -gt 0 ]]; do
+    KEY="$1"
+    case $KEY in
+      # Help
+      -h|--help)
+        echo "Kanka CE Tools, Version $(cat VERSION)"
+        echo "Usage: $0 [options] --kanka-dir=</Path/to/kanka>"
+        echo "  -h,           --help      Print this message"
+        echo "  -p (required) --kanka-dir Path to kanka directory"
+        echo "  -i            --icons     Select which icon set to use, options <fontawesome-free|fontawesome-nonfree|lineawesome>, defaults to fontawesome-free"
+        exit 0
+      ;;
+
+      # KANKA ROOT DIRECTORY
+      -p|--kanka-dir)
+        KANKA_ROOT_DIR="$2"
+        shift
+        shift
+        ;;
+
+      # ICON SET
+      -i|--icons)
+        ICONS="$2"
+        shift
+        shift
+        ;;
+        
+      # unknown flag
+      *)
+        error "Invalid command line option <$KEY>. See -h for more information." $E_USAGE
+        ;;
+    esac
+  done
+
+  # --- KANKA ROOT DIRECTORY ---
+  # If user provided path is not set, break
+  cecho ${INFO} "Kanka root directory:"
+  if [ -z "${KANKA_ROOT_DIR}" ]; then
+    cecho ${INFO} "  You have to provide the path where the Kanka root directory is located"
+    cecho ${INFO} "  via the -p <DIR> or --kanka_dir <DIR> option."
+    error "Kanka root directory was not provide" $E_USAGE
+  else 
+    # Check the input argument of the install path and replace the tilde
+    # character '~' by the users home directory ${HOME}. 
+    KANKA_ROOT_DIR=${KANKA_ROOT_DIR/#~\//$HOME\/}
+    echo "  ${KANKA_ROOT_DIR}"
+  fi
+
+  # --- ICON SET ---
+  # If user provided icons is not set, use default 
+  cecho ${INFO} "Icons to use:"
+  if [ -z "${ICONS}" ]; then
+    ICONS="fontawesome-free"
+    cecho ${INFO} "  No icon-set selected, default to fontawesome-free."
+    cecho ${INFO} "  To use different icons use the -i <ICONS-NAME> or --icons <ICONS-NAME> option."
+    cecho ${INFO} "  The available ooptions are: fontawesome-free, fontawesome-nonfree and lineawesome."
+  fi
+}
+
+
+# ++============================================================++
+# ||                    The actual program                      ||
+# ++============================================================++
+
+# --- Verify that the script is called from the kanka root directory ---
+if [ "$(pwd)" != "${TOOLS_ROOT}" ]; then
+  error "This script has to be called from the kanka-ce-tools root directory." $E_USAGE
+fi
+
+
+# -- Parse arguments ---
+if ! parse_arguments "$@"; then
+  exit 0
+fi
+
+
+# --- Delete unused files ---
+cecho ${INFO} "Clean up"
+if ! bash "$TOOLS_ROOT/resources/clean-up-unused.sh" "$TOOLS_ROOT" "$KANKA_ROOT_DIR" "$@"; then
+  error "Icon replacement failed" 2
+fi
+cecho ${GOOD} "Done!"
+
+
+# --- Add new files ---
+cecho ${INFO} "Add new files"
+if ! bash "$TOOLS_ROOT/resources/move-into-place.sh" "$TOOLS_ROOT" "$KANKA_ROOT_DIR" "$@"; then
+  error "Icon replacement failed" 2
+fi
+cecho ${GOOD} "Done!"
+
+
+# --- Apply Patches ---
+cecho ${INFO} "Replace Icons"
+if ! bash "$TOOLS_ROOT/patches/icons/replace-fontawesome.sh" "$TOOLS_ROOT" "$KANKA_ROOT_DIR" "$ICONS" "$@"; then
+  error "Icon replacement failed" 2
+fi
+cecho ${GOOD} "Done!"
+
+cecho ${INFO} "Enable Premium features"
+if ! bash "$TOOLS_ROOT/patches/premium/enable-premium.sh" "$TOOLS_ROOT" "$KANKA_ROOT_DIR" "$@"; then
+  error "Enable premium failed" 2
+fi
+cecho ${GOOD} "Done!"
+
+cecho ${INFO} "Add MinIO backend"
+if ! bash "$TOOLS_ROOT/patches/minio/add-minio-backend.sh" "$TOOLS_ROOT" "$KANKA_ROOT_DIR"; then
+  error "MinIO backend patch failed" 2
+fi
+cecho ${GOOD} "Done!"
+
+echo
+cecho ${GOOD} "All Done!"
