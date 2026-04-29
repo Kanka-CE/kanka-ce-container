@@ -34,3 +34,6 @@ cp $TOOLS_ROOT/resources/files/docker-compose.yml $KANKA_ROOT_DIR/docker-compose
 # New Files
 cp $TOOLS_ROOT/resources/scripts/gen-passwords.sh $KANKA_ROOT_DIR/gen-passwords.sh
 cp $TOOLS_ROOT/resources/scripts/prepare-kanka-ce.sh $KANKA_ROOT_DIR/prepare-kanka-ce.sh
+
+mkdir -p $KANKA_ROOT_DIR/.github/workflows
+cp $TOOLS_ROOT/resources/workflows/*.yml $KANKA_ROOT_DIR/.github/workflows/
