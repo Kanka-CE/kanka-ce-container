@@ -17,6 +17,18 @@ Kanka CE is **not** affiliated with the official Kanka project.
 
 For a detailed installation guide see the [Wiki page](https://github.com/kinnewig/kanka-community-edition/wiki/Installation)
 
+<details>
+<summary>(Alternatively:) Kanka CE with MinIO as file backend</summary>
+
+For larger deployments Kanka-CE supports MinIO as file backend. 
+Therefore, run the following commands first:
+```bash
+cp .env.example.minio .env
+cp docker-compose.yml.minio docker-compose.yml
+```
+and than follow the rest of quick start as normal.
+</details>
+
 But it basically boils down to:
 
 - Install prequisits

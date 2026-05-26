@@ -163,19 +163,6 @@ first_set_up() {
   echo "MariaDB ready to use!"
 
 
-  # --- Configure Minio ---
-  # Get the container name
-  MINIO_CONTAINER=$(sail ps --format "{{.Names}}" | grep minio)
-  # Authenticate
-  $provider exec -it ${MINIO_CONTAINER} mc alias set kanka-minio http://localhost:9000 ${MINIO_ACCESS_KEY_ID} ${MINIO_PASSWORD}
-  # Create Kanka bucket and make it public
-  $provider exec -it ${MINIO_CONTAINER} mc mb kanka-minio/${MINIO_BUCKET}
-  $provider exec -it ${MINIO_CONTAINER} mc anonymous set public kanka-minio/${MINIO_BUCKET}
-  # Create thumbnails bucket and make it public
-  $provider exec -it ${MINIO_CONTAINER} mc mb kanka-minio/thumbnails
-  $provider exec -it ${MINIO_CONTAINER} mc anonymous set public kanka-minio/thumbnails
-
-
   # --- Run the installer ---
   sail artisan kanka:install
   sail artisan setup:meilisearch
@@ -211,11 +198,8 @@ elif [[ "$DB_PASSWORD" == "password" ]]; then
     exit 1
 fi
 
-# MINIO_PASSWORD
-if [[ -z "$MINIO_PASSWORD" ]]; then
-  cecho ${ERROR} "MINIO_PASSWORD is empty!"
-  exit 1
-elif [[ "$MINIO_PASSWORD" == "password" ]]; then
+# MINIO_PASSWORD (if present)
+if [[ "$MINIO_PASSWORD" == "password" ]]; then
   cecho ${ERROR} "MINIO_PASSWORD must not be 'password'!"
   exit 1
 fi
