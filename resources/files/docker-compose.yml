@@ -27,7 +27,6 @@ services:
             - mariadb
             - redis
             - meilisearch
-            - mailpit
     mariadb:
         container_name: kanka_ce_mariadb
         image: 'mariadb:11'
@@ -63,14 +62,6 @@ services:
                 - ping
             retries: 3
             timeout: 5s
-    mailpit:
-        container_name: kanka_ce_mailpit
-        image: axllent/mailpit
-        ports:
-        - '8025:8025'  # Web UI
-        - '${MAIL_PORT}:1025'  # SMTP server
-        networks:
-            - sail
     meilisearch:
         container_name: kanka_ce_meilisearch
         image: 'getmeili/meilisearch:latest'
