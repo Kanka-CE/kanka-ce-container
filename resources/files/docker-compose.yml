@@ -26,10 +26,7 @@ services:
         depends_on:
             - mariadb
             - redis
-            - minio
             - meilisearch
-            - mailpit
-#            - reverb
     mariadb:
         container_name: kanka_ce_mariadb
         image: 'mariadb:11'
@@ -65,81 +62,6 @@ services:
                 - ping
             retries: 3
             timeout: 5s
-    minio:
-        container_name: kanka_ce_minio
-        image: 'minio/minio:RELEASE.2024-07-15T19-02-30Z'
-        ports:
-            - '${MINIO_PORT}:9000'
-            - '${MINIO_CONSOLE_PORT}:8900'
-        environment:
-            MINIO_ROOT_USER: '${MINIO_ACCESS_KEY_ID}'
-            MINIO_ROOT_PASSWORD: '${MINIO_PASSWORD}'
-        volumes:
-            - '${KANKA_CE_DATA}/minio:/data/minio'
-        networks:
-            - sail
-        command: 'minio server /data/minio --console-address ":8900"'
-        healthcheck:
-            test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-            retries: 3
-            timeout: 5s
-    thumbor:
-        container_name: kanka_ce_thumbor
-        image: 'beeyev/thumbor-s3:7.1-slim-alpine'
-        platform: linux/amd64
-        tty: true
-        ports:
-            - '${FORWARD_THUMBOR_PORT:-8888}:8888'
-        volumes:
-            - '${KANKA_CE_DATA}/thumbor:/data'
-        networks:
-            - sail
-        environment:
-            - LOG_LEVEL=error
-            - LOADER=thumbor_aws.loader
-            - AWS_LOADER_REGION_NAME=local
-            - 'AWS_LOADER_BUCKET_NAME=${MINIO_BUCKET}'
-            - 'AWS_LOADER_S3_ACCESS_KEY_ID=${MINIO_ACCESS_KEY_ID}'
-            - 'AWS_LOADER_S3_SECRET_ACCESS_KEY=${MINIO_PASSWORD}'
-            - 'AWS_LOADER_S3_ENDPOINT_URL=${MINIO_URL}:${MINIO_PORT}/'
-            - RESULT_STORAGE=thumbor_aws.result_storage
-            - AWS_RESULT_STORAGE_BUCKET_NAME=thumbnails
-            - 'AWS_RESULT_STORAGE_S3_ACCESS_KEY_ID=${MINIO_ACCESS_KEY_ID}'
-            - 'AWS_RESULT_STORAGE_S3_SECRET_ACCESS_KEY=${MINIO_PASSWORD}'
-            - 'AWS_RESULT_STORAGE_S3_ENDPOINT_URL=${MINIO_URL}:${MINIO_PORT}/'
-            - AWS_RESULT_STORAGE_ROOT_PATH=rs
-            - RESULT_STORAGE_STORES_UNSAFE=True
-            - ALLOW_UNSAFE_URL=True
-            - RESULT_STORAGE_EXPIRATION_SECONDS=2629746
-            - QUALITY=80
-            - AUTO_WEBP=True
-            - RESPECT_ORIENTATION=True
-            - MAX_AGE=86400
-            - HTTP_LOADER_VALIDATE_CERTS=False
-        depends_on:
-            - minio
-    thumbor-nginx:
-        container_name: kanka_ce_thumbor_nginx
-        image: 'nginx:1.23'
-        tty: true
-        volumes:
-            - './.nginx:/etc/nginx/conf.d/'
-        ports:
-            - '8889:80'
-        environment:
-            - NGINX_PORT=8889
-        networks:
-            - sail
-        depends_on:
-            - thumbor
-    mailpit:
-        container_name: kanka_ce_mailpit
-        image: axllent/mailpit
-        ports:
-        - '8025:8025'  # Web UI
-        - '${MAIL_PORT}:1025'  # SMTP server
-        networks:
-            - sail
     meilisearch:
         container_name: kanka_ce_meilisearch
         image: 'getmeili/meilisearch:latest'
@@ -156,32 +78,6 @@ services:
             test: ["CMD", "wget", "--no-verbose", "--spider",  "http://127.0.0.1:7700/health"]
             retries: 3
             timeout: 5s
-#    reverb:
-#        container_name: kanka_ce_reverb
-#        build:
-#            context: ./vendor/laravel/sail/runtimes/8.4
-#            dockerfile: Dockerfile
-#            args:
-#                WWWGROUP: "${APP_GROUP_ID}"
-#        image: sail-8.4/app
-#        extra_hosts:
-#            - "host.docker.internal:host-gateway"
-#        ports:
-#            - "${REVERB_PORT:-8080}:8080"
-#        command: "php artisan reverb:start"
-#        environment:
-#            WWWUSER: "${APP_USER_ID}"
-#            LARAVEL_SAIL: 1
-#            XDEBUG_MODE: "${SAIL_XDEBUG_MODE:-off}"
-#            XDEBUG_CONFIG: "${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}"
-#            IGNITION_LOCAL_SITES_PATH: "${PWD}"
-#        volumes:
-#            - ".:/var/www/html"
-#        networks:
-#            - sail
-#        depends_on:
-#            - mariadb
-#            - redis
 networks:
     sail:
         name: sail

@@ -26,14 +26,21 @@ KANKA_ROOT_DIR="$2"
 
 source "$TOOLS_ROOT/core/lib.sh"
 
-# Files to replace
+# --- Files to replace ---
 cp $TOOLS_ROOT/resources/docs/README.md $KANKA_ROOT_DIR/README.md
 cp $TOOLS_ROOT/resources/files/.env.example $KANKA_ROOT_DIR/.env.example
 cp $TOOLS_ROOT/resources/files/docker-compose.yml $KANKA_ROOT_DIR/docker-compose.yml
 
-# New Files
+
+# --- New Files ---
 cp $TOOLS_ROOT/resources/scripts/gen-passwords.sh $KANKA_ROOT_DIR/gen-passwords.sh
 cp $TOOLS_ROOT/resources/scripts/prepare-kanka-ce.sh $KANKA_ROOT_DIR/prepare-kanka-ce.sh
 
+# Stack with MinIO
+cp $TOOLS_ROOT/resources/files/.env.example $KANKA_ROOT_DIR/.env.example.minio
+cp $TOOLS_ROOT/resources/files/docker-compose.yml $KANKA_ROOT_DIR/docker-compose.yml.minio
+
+
+# --- Folder ---
 mkdir -p $KANKA_ROOT_DIR/.github/workflows
 cp $TOOLS_ROOT/resources/workflows/*.yml $KANKA_ROOT_DIR/.github/workflows/
