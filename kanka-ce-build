@@ -21,8 +21,40 @@
 # ++============================================================++
 set -e
 
+# Colours for progress and error reporting
+ERROR="\033[1;31m"
+GOOD="\033[1;32m"
+WARN="\033[1;35m"
+INFO="\033[1;34m"
+BOLD="\033[1m"
+
+# Display messages in a specified colour
+cecho() {
+  COL=$1; shift
+  echo -e "${COL}$@\033[0m"
+}
+
+# Error codes
+E_OK=0
+E_USAGE=1
+E_UPSTREAM_NOT_FOUND=2
+E_OUTPUT_WRITE_FAIL=3
+E_PATCH_FAILED=4
+E_RESOURCE_FAILED=5
+E_STEP_FAILED=6
+E_DEPENDENCY_MISSING=7
+
+# Error handling
+error() {
+    local message="$1"
+    local code="${2:-1}"
+
+    cecho ${ERROR} "ERROR: $message" >&2
+    exit "$code"
+}
+
+# Tools directory
 TOOLS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$TOOLS_ROOT/core/lib.sh"
 
 
 
@@ -105,22 +137,6 @@ fi
 if ! parse_arguments "$@"; then
   exit 0
 fi
-
-
-# --- Delete unused files ---
-cecho ${INFO} "Clean up"
-if ! bash "$TOOLS_ROOT/resources/clean-up-unused.sh" "$TOOLS_ROOT" "$KANKA_ROOT_DIR" "$@"; then
-  error "Clean up failed" 2
-fi
-cecho ${GOOD} "Done!"
-
-
-# --- Add new files ---
-cecho ${INFO} "Add new files"
-if ! bash "$TOOLS_ROOT/resources/move-into-place.sh" "$TOOLS_ROOT" "$KANKA_ROOT_DIR" "$@"; then
-  error "Adding new files failed" 2
-fi
-cecho ${GOOD} "Done!"
 
 
 # --- Apply Patches ---
