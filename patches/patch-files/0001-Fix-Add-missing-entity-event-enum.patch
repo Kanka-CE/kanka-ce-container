@@ -1,0 +1,24 @@
+From 56b2883e3bc849cbcc495ccfefe27381ff19b2cc Mon Sep 17 00:00:00 2001
+From: Sebastian Kinnewig <Sebastian@Kinnewig.org>
+Date: Sat, 25 Apr 2026 17:53:44 +0200
+Subject: [PATCH] Fix: Add missing entity event enum.
+
+---
+ app/Enums/EntityEventTypes.php | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/app/Enums/EntityEventTypes.php b/app/Enums/EntityEventTypes.php
+index 05c424d18..08577f37a 100644
+--- a/app/Enums/EntityEventTypes.php
++++ b/app/Enums/EntityEventTypes.php
+@@ -4,6 +4,7 @@
+ 
+ enum EntityEventTypes: int
+ {
++    case none = 1;
+     case birth = 2;
+     case death = 3;
+     case calendarDate = 4;
+-- 
+2.54.0
+

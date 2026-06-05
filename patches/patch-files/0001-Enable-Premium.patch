@@ -1,0 +1,113 @@
+From 497f136f0fa7b364964ff507d4dc748f0184eeab Mon Sep 17 00:00:00 2001
+From: Sebastian Kinnewig <Sebastian@Kinnewig.org>
+Date: Fri, 5 Jun 2026 15:07:15 +0200
+Subject: [PATCH] Enable Premium.
+
+---
+ app/Models/Concerns/UserBoosters.php | 41 +++-------------------------
+ app/Models/User.php                  | 17 ++++--------
+ 2 files changed, 10 insertions(+), 48 deletions(-)
+
+diff --git a/app/Models/Concerns/UserBoosters.php b/app/Models/Concerns/UserBoosters.php
+index 8b10376d9..08b1e8609 100644
+--- a/app/Models/Concerns/UserBoosters.php
++++ b/app/Models/Concerns/UserBoosters.php
+@@ -14,9 +14,8 @@ trait UserBoosters
+     /**
+      * Get available boosts for the user
+      */
+-    public function availableBoosts(): int
+-    {
+-        return $this->maxBoosts() - $this->boosting();
++    public function availableBoosts(): int {
++        return 100;
+     }
+ 
+     /**
+@@ -34,39 +33,7 @@ public function boosting(): int
+     /**
+      * Get max number of boosts a user can give
+      */
+-    public function maxBoosts(): int
+-    {
+-        // Allows admins to give boosters to members of the community
+-        $base = 0;
+-        if (! empty($this->booster_count)) {
+-            $base += $this->booster_count;
+-        }
+-
+-        if (! $this->isSubscriber()) {
+-            return $base;
+-        }
+-
+-        if ($this->hasRole('admin')) {
+-            return max(3, $base);
+-        }
+-
+-        $levels = [
+-            Pledge::KOBOLD => 0,
+-            Pledge::GOBLIN => 0,
+-            Pledge::OWLBEAR => 1,
+-            Pledge::WYVERN => 3,
+-            Pledge::ELEMENTAL => 7,
+-        ];
+-        if ($this->hasBoosterNomenclature()) {
+-            $levels = [
+-                Pledge::KOBOLD => 0,
+-                Pledge::GOBLIN => 1,
+-                Pledge::OWLBEAR => 3,
+-                Pledge::WYVERN => 6,
+-                Pledge::ELEMENTAL => 10,
+-            ];
+-        }
+-
+-        return Arr::get($levels, $this->pledge ?? 'unknown', 0) + $base;
++    public function maxBoosts(): int {
++        return 100;
+     }
+ }
+diff --git a/app/Models/User.php b/app/Models/User.php
+index ea4ec96bf..0fe2ce772 100644
+--- a/app/Models/User.php
++++ b/app/Models/User.php
+@@ -132,9 +132,8 @@ public function hasCampaignRole(int $roleId): bool
+     /**
+      * Determine if a user is a subscriber
+      */
+-    public function isSubscriber(): bool
+-    {
+-        return $this->hasRole(Pledge::ROLE) || $this->hasRole('admin') || $this->onTrial();
++    public function isSubscriber(): bool {
++        return true;
+     }
+ 
+     /**
+@@ -156,9 +155,8 @@ public function isGoblin(): bool
+     /**
+      * Determine if a user is an elemental
+      */
+-    public function isElemental(): bool
+-    {
+-        return (bool) (! empty($this->pledge) && $this->pledge == Pledge::ELEMENTAL);
++    public function isElemental(): bool {
++        return true;
+     }
+ 
+     public function isOwlbear(): bool
+@@ -428,11 +426,8 @@ public function hasPayPal(): bool
+     /**
+      * Check if the user is subscribed via a manual sub
+      */
+-    public function hasManualSubscription(): bool
+-    {
+-        return $this->subscribed('kanka') &&
+-            $this->subscription('kanka') &&
+-            Str::startsWith($this->subscription('kanka')->stripe_id, 'manual_');
++    public function hasManualSubscription(): bool {
++        return true;
+     }
+ 
+     /**
+-- 
+2.54.0
+

@@ -1,0 +1,39 @@
+From 6a31de80c67c91b68df0620ac1dcce20bb992b16 Mon Sep 17 00:00:00 2001
+From: Sebastian Kinnewig <Sebastian@Kinnewig.org>
+Date: Fri, 5 Jun 2026 14:59:35 +0200
+Subject: [PATCH] Add minio as filesystem.
+
+---
+ config/filesystems.php | 17 +++++++++++++++++
+ 1 file changed, 17 insertions(+)
+
+diff --git a/config/filesystems.php b/config/filesystems.php
+index 4affc8226..d29948778 100644
+--- a/config/filesystems.php
++++ b/config/filesystems.php
+@@ -137,5 +137,22 @@
+                 false,
+             ),
+         ],
++
++        /**
++         * Added by Kanka-CE-Tools: MinIO backend
++         * This can be used for selfhosting.
++         */
++        "minio" => [
++            "driver" => "s3",
++            "key" => env("MINIO_ACCESS_KEY_ID"),
++            "secret" => env("MINIO_PASSWORD"),
++            "region" => "local",
++            "bucket" => env("MINIO_BUCKET"),
++            "root" => env("APP_ENV") != "production" ? env("APP_ENV") : null,
++            "visibility" => "public",
++            "url" => env("MINIO_URL") . ':' . env("MINIO_PORT") . '/' . env("MINIO_BUCKET"),
++            "endpoint" => env("MINIO_URL") . ':' . env("MINIO_PORT"),
++            "use_path_style_endpoint" => env(true),
++        ],
+     ],
+ ];
+-- 
+2.54.0
+

@@ -110,7 +110,7 @@ fi
 # --- Delete unused files ---
 cecho ${INFO} "Clean up"
 if ! bash "$TOOLS_ROOT/resources/clean-up-unused.sh" "$TOOLS_ROOT" "$KANKA_ROOT_DIR" "$@"; then
-  error "Icon replacement failed" 2
+  error "Clean up failed" 2
 fi
 cecho ${GOOD} "Done!"
 
@@ -118,7 +118,7 @@ cecho ${GOOD} "Done!"
 # --- Add new files ---
 cecho ${INFO} "Add new files"
 if ! bash "$TOOLS_ROOT/resources/move-into-place.sh" "$TOOLS_ROOT" "$KANKA_ROOT_DIR" "$@"; then
-  error "Icon replacement failed" 2
+  error "Adding new files failed" 2
 fi
 cecho ${GOOD} "Done!"
 
@@ -130,16 +130,14 @@ if ! bash "$TOOLS_ROOT/patches/icons/replace-fontawesome.sh" "$TOOLS_ROOT" "$KAN
 fi
 cecho ${GOOD} "Done!"
 
-cecho ${INFO} "Enable Premium features"
-if ! bash "$TOOLS_ROOT/patches/premium/enable-premium.sh" "$TOOLS_ROOT" "$KANKA_ROOT_DIR" "$@"; then
-  error "Enable premium failed" 2
-fi
-cecho ${GOOD} "Done!"
-
-cecho ${INFO} "Add MinIO backend"
-if ! bash "$TOOLS_ROOT/patches/minio/add-minio-backend.sh" "$TOOLS_ROOT" "$KANKA_ROOT_DIR"; then
-  error "MinIO backend patch failed" 2
-fi
+cecho ${INFO} "Apply patches"
+if ! bash 
+for file in $TOOLS_ROOT/patches/patch-files/*.patch; do
+    echo "  Apply: $file"
+    patch -p1 -d $KANKA_ROOT_DIR < "$file" || {
+        error "Patch $file failed" 2
+    }
+done
 cecho ${GOOD} "Done!"
 
 echo

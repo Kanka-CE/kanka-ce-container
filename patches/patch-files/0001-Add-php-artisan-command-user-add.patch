@@ -1,0 +1,80 @@
+From 422449094d183dc1294552f55e2d362af6a40ce5 Mon Sep 17 00:00:00 2001
+From: Sebastian Kinnewig <Sebastian@Kinnewig.org>
+Date: Tue, 28 Apr 2026 12:34:05 +0200
+Subject: [PATCH] Add php artisan command: user:add
+
+---
+ app/Console/Commands/Users/AddUser.php | 61 ++++++++++++++++++++++++++
+ 1 file changed, 61 insertions(+)
+ create mode 100644 app/Console/Commands/Users/AddUser.php
+
+diff --git a/app/Console/Commands/Users/AddUser.php b/app/Console/Commands/Users/AddUser.php
+new file mode 100644
+index 000000000..256dc8e07
+--- /dev/null
++++ b/app/Console/Commands/Users/AddUser.php
+@@ -0,0 +1,61 @@
++<?php
++
++namespace App\Console\Commands\Users;
++
++use Illuminate\Console\Command;
++use App\Models\User;
++use Illuminate\Support\Facades\Hash;
++use Illuminate\Support\Facades\DB;
++
++class AddUser extends Command
++{
++    protected $signature = 'user:add
++                            {name : The user\'s name}
++                            {email : The user\'s email}
++                            {--admin : Assign admin role}';
++
++    protected $description = 'Create a new user and optionally assign admin role';
++
++    public function handle()
++    {
++        $name = $this->argument('name');
++        $email = $this->argument('email');
++
++        $password = $this->secret('Enter password');
++
++        if (!$password) {
++            $this->error('Password cannot be empty');
++            return 1;
++        }
++
++        // Create user
++        $user = User::create([
++            'name' => $name,
++            'email' => $email,
++            'password' => Hash::make($password),
++        ]);
++
++        $this->info("User created: {$user->id} ({$user->email})");
++
++        // Assign default role
++        DB::table('user_roles')->insert([
++            'user_id' => $user->id,
++            'role_id' => 2, // role_id 2 = "user"
++        ]);
++
++        $this->info("Assigned default user role");
++
++        // Assign admin role if requested
++        if ($this->option('admin')) {
++            DB::table('user_roles')->insert([
++                'user_id' => $user->id,
++                'role_id' => 1, // role_id 1 = "admin"
++            ]);
++
++            $this->info("Assigned admin role");
++        }
++
++        return 0;
++    }
++}
++
+-- 
+2.54.0
+
