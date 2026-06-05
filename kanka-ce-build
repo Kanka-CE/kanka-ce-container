@@ -71,14 +71,22 @@ parse_arguments() {
         echo "Kanka CE Tools, Version $(cat VERSION)"
         echo "Usage: $0 [options] --kanka-dir=</Path/to/kanka>"
         echo "  -h,           --help      Print this message"
-        echo "  -p (required) --kanka-dir Path to kanka directory"
+        echo "  -t            --target    Target Kanka version, that shall be used as base (default: latest)"
+        echo "  -b            --build     build folder"
         echo "  -i            --icons     Select which icon set to use, options <fontawesome-free|fontawesome-nonfree|lineawesome>, defaults to fontawesome-free"
         exit 0
       ;;
 
-      # KANKA ROOT DIRECTORY
-      -p|--kanka-dir)
-        KANKA_ROOT_DIR="$2"
+      # tARGET VERSION
+      -t|--target)
+        TARGET_VERSION="$2"
+        shift
+        shift
+        ;;
+
+      # BUILD DIRECTORY
+      -b|--build)
+        BUILD_DIR="$2"
         shift
         shift
         ;;
@@ -97,18 +105,32 @@ parse_arguments() {
     esac
   done
 
-  # --- KANKA ROOT DIRECTORY ---
-  # If user provided path is not set, break
-  cecho ${INFO} "Kanka root directory:"
-  if [ -z "${KANKA_ROOT_DIR}" ]; then
-    cecho ${INFO} "  You have to provide the path where the Kanka root directory is located"
-    cecho ${INFO} "  via the -p <DIR> or --kanka_dir <DIR> option."
-    error "Kanka root directory was not provide" $E_USAGE
+  # -- TARGET VERSION --
+  cecho ${INFO} "Target Version:"
+  if [ -z "${TARGET_VERSION}" ]; then
+    TARGET_VERSION="latest"
+    echo "  No target version provided. Use the default target version:"
+    echo "  ${TARGET_VERSION}"
+    echo "  If you want to specify an other version"
+    echo "  use the -t <VERSION> or --target <VERSION> option."
   else 
-    # Check the input argument of the install path and replace the tilde
+    echo "  ${TARGET_VERSION}"
+  fi
+
+  # -- BUILD DIRECTORY --
+  # If user provided build_dir is not set, use default build_dir
+  cecho ${INFO} "Build folder:"
+  if [ -z "${BUILD_DIR}" ]; then
+    BUILD_DIR="${TOOLS_ROOT}/build"
+    echo "  No build directory was provided. Use the default build folder:"
+    echo "  ${BUILD_DIR}"
+    echo "  If you want to specify an other path, provide a build directory"
+    echo "  use the -b <DIR> or --build <DIR> option."
+  else 
+    # Check the input argument of the install path and (if used) replace the tilde
     # character '~' by the users home directory ${HOME}. 
-    KANKA_ROOT_DIR=${KANKA_ROOT_DIR/#~\//$HOME\/}
-    echo "  ${KANKA_ROOT_DIR}"
+    BUILD_DIR=${BUILD_DIR/#~\//$HOME\/}
+    echo "  ${BUILD_DIR}"
   fi
 
   # --- ICON SET ---
@@ -139,10 +161,38 @@ if ! parse_arguments "$@"; then
 fi
 
 
-# --- Apply Patches ---
+# -- Prepare --
+cecho ${INFO} "Download Kanka-CE"
+# Create the working directory
+mkdir -p ${WORKDIR}
+cd ${WORKDIR}
+
+# Check if git is installed
+if ! command -v git &>/dev/null; then
+  cecho ${INFO} "Please install git to proceed:"
+  cecho ${INFO} "- Debian/Ubuntu: sudo apt install git"
+  cecho ${INFO} "- Red Hat/Fedora: sudo dnf install git"
+  error "'git' is not available on this system." 7
+fi
+
+# Download Kanka-CE
+git clone https://github.com/kinnewig/kanka-community-edition.git
+cd ${WORKDIR}/kanka-community-edition
+
+# Checkout the version
+if [[ "$TARGET_VERSION" == "latest" ]]; then
+  # Search for latest version
+  TARGET_VERSION=$(git tag -l --sort=-v:refname | head -n 1)
+  cecho ${INFO} "Latest version: $TAG"
+fi
+git checkout ${TARGET_VERSION}
+cecho ${GOOD} "Done!"
+
+
+# -- Apply Patches --
 cecho ${INFO} "Replace Icons"
-if ! bash "$TOOLS_ROOT/patches/icons/replace-fontawesome.sh" "$TOOLS_ROOT" "$KANKA_ROOT_DIR" "$ICONS" "$@"; then
-  error "Icon replacement failed" 2
+if ! bash "$TOOLS_ROOT/patches/icons/replace-fontawesome.sh" "$TOOLS_ROOT" "." "$ICONS" "$@"; then
+  error "Icon replacement failed" 4
 fi
 cecho ${GOOD} "Done!"
 
@@ -150,11 +200,32 @@ cecho ${INFO} "Apply patches"
 if ! bash 
 for file in $TOOLS_ROOT/patches/patch-files/*.patch; do
     echo "  Apply: $file"
-    patch -p1 -d $KANKA_ROOT_DIR < "$file" || {
-        error "Patch $file failed" 2
+    patch -p1 < "$file" || {
+        error "Patch $file failed" 4
     }
 done
 cecho ${GOOD} "Done!"
+
+
+# -- Copy the build files --
+cd ${WORKDIR}
+cp ${TOOLS_ROOT}/Dockerfile .
+cp -r ${TOOLS_ROOT}/Dockerfile/deploy .
+
+
+# -- Build Container --
+if command -v podman &>/dev/null; then
+  podman build -t kanka-ce:${TARGET_VERSION} -f Dockerfile
+elif command -v docker &>/dev/null; then
+  docker build -t kanka-ce:${TARGET_VERSION} -f Dockerfile
+else
+  cecho ${INFO} "Please install either podman or docker to proceed:"
+  cecho ${INFO} "- Debian/Ubuntu: sudo apt install podman  # or docker"
+  cecho ${INFO} "- Red Hat/Fedora: sudo dnf install podman  # or docker"
+  error "Neither 'podman' nor 'docker' is available on this system." 7
+fi  
+
+# Note that the publishing of the container is done via an GitHub action.
 
 echo
 cecho ${GOOD} "All Done!"

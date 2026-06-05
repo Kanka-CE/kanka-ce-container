@@ -1,7 +1,7 @@
 ###############################################
 # 1) BUILD STAGE
 ###############################################
-FROM rockylinux:10-minimal AS build
+FROM quay.io/rockylinux/rockylinux:10-minimal AS build
 
 RUN microdnf install -y \
     dnf git tar gzip which findutils curl \
@@ -27,10 +27,10 @@ RUN dnf clean all
 WORKDIR /app
 
 # Copy composer files
-COPY composer.json composer.lock ./
+COPY Kanka-CE/composer.json Kanka-CE/composer.lock ./
 
 # Copy Kanka-CE itself
-COPY . .
+COPY Kanka-CE .
 
 # Remove folder not required by the container
 RUN rm -rf   \
@@ -56,7 +56,7 @@ RUN rm -f \
     CLAUDE.md          \
     CODE_OF_CONDUCT.md \
     docker-compose.yml \
-    README.md          \
+    README.md          
 
 
 # Install the Composer
