@@ -16,6 +16,9 @@
 #
 # ---------------------------------------------------------------------
 
+#GIT='https://github.com/owlchester/kanka.git'
+GIT='https://github.com/kinnewig/kanka-community-edition.git'
+
 # ++============================================================++
 # ||                         Premilaris                         ||
 # ++============================================================++
@@ -138,9 +141,9 @@ parse_arguments() {
   cecho ${INFO} "Icons to use:"
   if [ -z "${ICONS}" ]; then
     ICONS="fontawesome-free"
-    cecho ${INFO} "  No icon-set selected, default to fontawesome-free."
-    cecho ${INFO} "  To use different icons use the -i <ICONS-NAME> or --icons <ICONS-NAME> option."
-    cecho ${INFO} "  The available ooptions are: fontawesome-free, fontawesome-nonfree and lineawesome."
+    echo "  No icon-set selected, default to fontawesome-free."
+    echo "  To use different icons use the -i <ICONS-NAME> or --icons <ICONS-NAME> option."
+    echo "  The available options are: fontawesome-free, fontawesome-nonfree and lineawesome."
   fi
 }
 
@@ -164,8 +167,8 @@ fi
 # -- Prepare --
 cecho ${INFO} "Download Kanka-CE"
 # Create the working directory
-mkdir -p ${WORKDIR}
-cd ${WORKDIR}
+mkdir -p ${BUILD_DIR}
+cd ${BUILD_DIR}
 
 # Check if git is installed
 if ! command -v git &>/dev/null; then
@@ -176,17 +179,20 @@ if ! command -v git &>/dev/null; then
 fi
 
 # Download Kanka-CE
-git clone https://github.com/kinnewig/kanka-community-edition.git
-cd ${WORKDIR}/kanka-community-edition
+git clone ${GIT} Kanka-CE
+cd ${BUILD_DIR}/Kanka-CE
 
 # Checkout the version
 if [[ "$TARGET_VERSION" == "latest" ]]; then
   # Search for latest version
-  TARGET_VERSION=$(git tag -l --sort=-v:refname | head -n 1)
+  TAG=$(git tag -l --sort=-v:refname | head -n 1)
   cecho ${INFO} "Latest version: $TAG"
+else
+  TAG=${TARGET_VERSION}
 fi
-git checkout ${TARGET_VERSION}
+git checkout ${TAG}
 cecho ${GOOD} "Done!"
+echo "${TAG}" > ${TOOLS_ROOT}/build-version
 
 
 # -- Apply Patches --
@@ -197,7 +203,6 @@ fi
 cecho ${GOOD} "Done!"
 
 cecho ${INFO} "Apply patches"
-if ! bash 
 for file in $TOOLS_ROOT/patches/patch-files/*.patch; do
     echo "  Apply: $file"
     patch -p1 < "$file" || {
@@ -208,9 +213,9 @@ cecho ${GOOD} "Done!"
 
 
 # -- Copy the build files --
-cd ${WORKDIR}
-cp ${TOOLS_ROOT}/Dockerfile .
-cp -r ${TOOLS_ROOT}/Dockerfile/deploy .
+cd ${BUILD_DIR}
+cp ${TOOLS_ROOT}/base/Dockerfile .
+cp -r ${TOOLS_ROOT}/base/deploy .
 
 
 # -- Build Container --
