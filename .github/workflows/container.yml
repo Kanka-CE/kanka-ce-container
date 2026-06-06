@@ -1,0 +1,45 @@
+name: Build and Release Container
+
+on:
+  workflow_dispatch:
+    
+permissions: write-all
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run build script
+        run: |
+          ./build-container.sh
+          echo "VERSION=$(cat build-version)" >> $GITHUB_ENV
+
+      - name: Tag image for GHCR
+        run: |
+          # version number
+          podman tag kanka-ce:latest \
+            ghcr.io/${{ github.repository_owner }}/kanka-ce:${{ env.VERSION }}
+
+          # latest
+            podman tag kanka-ce:latest \
+              ghcr.io/${{ github.repository_owner }}/kanka-ce:latest
+
+      - name: Push image
+        run: |
+          # version number
+          podman push ghcr.io/${{ github.repository_owner }}/kanka-ce:${{ env.VERSION }}
+
+          # latest
+          podman push ghcr.io/${{ github.repository_owner }}/kanka-ce:latest
