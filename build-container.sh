@@ -17,7 +17,7 @@
 # ---------------------------------------------------------------------
 
 #GIT='https://github.com/owlchester/kanka.git'
-GIT='https://github.com/kinnewig/kanka-community-edition.git'
+GIT='https://github.com/kanka-ce/kanka-community-edition.git'
 
 # ++============================================================++
 # ||                         Premilaris                         ||
@@ -165,10 +165,14 @@ fi
 
 
 # -- Prepare --
-cecho ${INFO} "Download Kanka-CE"
-# Create the working directory
-mkdir -p ${BUILD_DIR}
-cd ${BUILD_DIR}
+# Final folder structure:
+# (after the downloads are finished)
+# ${BUILD_DIR}
+# ├── root/
+# ├── Kanka-CE/
+# └── Dockerfile
+
+cecho ${INFO} "Downloading..."
 
 # Check if git is installed
 if ! command -v git &>/dev/null; then
@@ -178,7 +182,13 @@ if ! command -v git &>/dev/null; then
   error "'git' is not available on this system." 7
 fi
 
+# Download the Dockerfile
+cecho ${INFO} "Download Dockerfile"
+git clone https://github.com/kanka-ce/docker-kanka-ce.git ${BUILD_DIR}
+cd ${BUILD_DIR}
+
 # Download Kanka-CE
+cecho ${INFO} "Download Kanka-CE"
 git clone ${GIT} Kanka-CE
 cd ${BUILD_DIR}/Kanka-CE
 
@@ -212,13 +222,8 @@ done
 cecho ${GOOD} "Done!"
 
 
-# -- Copy the build files --
-cd ${BUILD_DIR}
-cp ${TOOLS_ROOT}/base/Dockerfile .
-cp -r ${TOOLS_ROOT}/base/deploy .
-
-
 # -- Build Container --
+cd ${BUILD_DIR}
 if command -v podman &>/dev/null; then
   podman build -t kanka-ce:${TARGET_VERSION} -f Dockerfile
 elif command -v docker &>/dev/null; then
