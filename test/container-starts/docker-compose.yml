@@ -1,0 +1,42 @@
+services:
+    kanka:
+        container_name: kanka_ce
+        image: 'ghcr.io/kinnewig/kanka-ce:latest'
+        ports:
+            - '${APP_PORT:-80}:80'
+        environment:
+          PUID: 1000
+          PGID: 1000
+          TZ: 'Europe/Berlin'
+        volumes:
+          - '${KANKA_CE_DATA}/kanka-ce:/var/www/storage'
+          - '.env:/var/www/.env'
+        networks:
+            - kanka
+        depends_on:
+            - mariadb
+            - redis
+            - meilisearch
+    mariadb:
+        container_name: kanka_ce_mariadb
+        image: 'mariadb:11'
+        ports:
+            - '${DB_PORT:-3306}:3306'
+        environment:
+            MYSQL_DATABASE: '${DB_DATABASE}'
+            MYSQL_PASSWORD: '${DB_PASSWORD}'
+            MYSQL_ROOT_PASSWORD: '${DB_ROOT_PASSWORD}'
+            MYSQL_USER: '${DB_USERNAME}'
+            MYSQL_ROOT_HOST: '%'
+        volumes:
+          - '${KANKA_CE_DATA}/mariadb:/var/lib/mysql'
+        networks:
+            - kanka
+        healthcheck:
+            test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+            retries: 3
+            timeout: 5s
+networks:
+    kanka:
+        name: kanka
+        driver: bridge
