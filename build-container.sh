@@ -224,15 +224,13 @@ cecho ${GOOD} "Done!"
 
 # -- Build Container --
 cd ${BUILD_DIR}
-if command -v podman &>/dev/null; then
-  podman build -t kanka-ce:${TARGET_VERSION} -f Dockerfile
-elif command -v docker &>/dev/null; then
+if command -v docker &>/dev/null; then
   docker build -t kanka-ce:${TARGET_VERSION} -f Dockerfile
 else
-  cecho ${INFO} "Please install either podman or docker to proceed:"
-  cecho ${INFO} "- Debian/Ubuntu: sudo apt install podman  # or docker"
-  cecho ${INFO} "- Red Hat/Fedora: sudo dnf install podman  # or docker"
-  error "Neither 'podman' nor 'docker' is available on this system." 7
+  cecho ${INFO} "Please install docker to proceed:"
+  cecho ${INFO} "- Debian/Ubuntu: sudo apt install docker"
+  cecho ${INFO} "- Red Hat/Fedora: sudo dnf install docker"
+  error "'docker' is not available on this system." 7
 fi  
 
 # Note that the publishing of the container is done via an GitHub action.
