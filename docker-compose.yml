@@ -9,8 +9,8 @@ services:
           PGID: 1000
           TZ: 'Etc/UTC'
         volumes:
-          - '${KANKA_CE_DATA}/kanka-ce:/var/www/storage'
-          - '.env:/var/www/.env'
+          - '${KANKA_CE_DATA}/kanka-ce:/app/www/storage'
+          - '.env:/app/www/.env'
         networks:
             - kanka
         depends_on:
