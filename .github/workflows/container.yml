@@ -32,17 +32,17 @@ jobs:
       - name: Tag image for GHCR
         run: |
           # version number
-          podman tag kanka-ce:latest \
+          docker tag kanka-ce:latest \
             ghcr.io/${{ env.OWNER }}/kanka-ce:${{ env.VERSION }}
 
           # latest
-            podman tag kanka-ce:latest \
+            docker tag kanka-ce:latest \
               ghcr.io/${{ env.OWNER }}/kanka-ce:latest
 
       - name: Push image
         run: |
           # version number
-          podman push ghcr.io/${{ env.OWNER }}/kanka-ce:${{ env.VERSION }}
+          docker push ghcr.io/${{ env.OWNER }}/kanka-ce:${{ env.VERSION }}
 
           # latest
-          podman push ghcr.io/${{ env.OWNER }}/kanka-ce:latest
+          docker push ghcr.io/${{ env.OWNER }}/kanka-ce:latest
