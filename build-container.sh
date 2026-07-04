@@ -225,7 +225,7 @@ cecho ${GOOD} "Done!"
 # -- Build Container --
 cd ${BUILD_DIR}
 if command -v docker &>/dev/null; then
-  docker build -t kanka-ce:${TARGET_VERSION} -f Dockerfile
+  docker build -t kanka-ce:${TARGET_VERSION} -f Dockerfile .
 else
   cecho ${INFO} "Please install docker to proceed:"
   cecho ${INFO} "- Debian/Ubuntu: sudo apt install docker"
