@@ -186,6 +186,7 @@ fi
 cecho ${INFO} "Download Dockerfile"
 git clone https://github.com/kanka-ce/docker-kanka-ce.git ${BUILD_DIR}
 cd ${BUILD_DIR}
+git checkout fix-js-issue
 
 # Download Kanka-CE
 cecho ${INFO} "Download Kanka-CE"
