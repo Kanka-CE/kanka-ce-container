@@ -1,96 +1,181 @@
 # Kanka Community Edition
 *A community-maintained, self-hostable variant of the Kanka worldbuilding platform.*
+If you want to self-host Kanke-CE take a look at the [kanka-ce-container](https://github.com/kinnewig/kanka-ce-container).
 
 
 ## What is this?
 
 **Kanka Community Edition (Kanka CE)** is a community-maintained fork of the official  
 [Kanka](https://github.com/owlchester/kanka) worldbuilding platform.
-It contains the **patched and transformed source code** of Kanka to make selfhosting easier. 
-To maintain compatibility with the original upstream Kanka codebase the [kanka-ce-tools](https://github.com/kinnewig/kanka-ce-tools) are used
-to apply many changes automatically to each new release of Kanka.
+It contains the **a slighly modified source code** of Kanka to make selfhosting easier 
+and is used as base to build the [kanka-ce-container](https://github.com/kinnewig/kanka-ce-container).
+To maintain compatibility with the original upstream Kanka codebase most changes are
+handled as patches, which can be found in [kanka-ce-container](https://github.com/kinnewig/kanka-ce-container).
 
 Kanka CE is **not** affiliated with the official Kanka project.
 
 
-## Quick Start Guide
+## Quick Start Guide (Docker)
 
-For a detailed installation guide see the [Wiki page](https://github.com/kinnewig/kanka-community-edition/wiki/Installation)
+Kanka-CE comes as ready to (Docker-)container.
+You can find the self-hosting instructions also in the [Wiki](https://github.com/kinnewig/kanka-community-edition/wiki/Self%E2%80%90Hosting-Guide).
+
+### Preparation
+ This guide assumes your server is already up and running, with a recent and updated version of a server‑suitable Linux distribution, e.g., [Rocky Linux](https://rockylinux.org/), [Debian](https://www.debian.org/index.de.html), etc. 
+You also need to install either [Docker](https://docs.docker.com/engine/install/) and docker-compose or, if you are using [Podman](https://podman.io/docs/installation), respectively Podman and podman-compose.
 
 <details>
-<summary>(Alternatively:) Kanka CE with MinIO as file backend</summary>
+<summary>Docker – Debian (apt)</summary>
 
-For larger deployments Kanka-CE supports MinIO as file backend. 
-Therefore, run the following commands first:
 ```bash
-cp .env.example.minio .env
-cp docker-compose.yml.minio docker-compose.yml
+sudo apt -y install docker docker-compose
 ```
-and than follow the rest of quick start as normal.
+
 </details>
 
-But it basically boils down to:
+<details>
+<summary>Podman – Debian (apt)</summary>
 
-- Install prequisits
-Install `docker` and `docker-compose` or alternatively install `podman` and `podman compose`.
-
-- Download Kanka CE
 ```bash
-git clone https://github.com/kinnewig/kanka-community-edition.git
+sudo apt -y install podman podman-compose
 ```
 
-- Configure Kanka CE
-Create your own config for Kanka, you can use `.env.example` as a starting point
-```bash
-cp .env.example .env
-```
-and modify `.env`.
+</details>
 
-- Secure Kanka CE
-To generate secure passwords run
+<details>
+<summary>Docker – Rocky Linux (dnf)</summary>
+
+For more details, see [the official documentation](https://docs.rockylinux.org/10/gemstones/containers/docker/).
+
+Add the Docker repository:
+
+```bash
+sudo dnf config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo
+```
+
+Install Docker, Docker Compose, and other useful plugins:
+
+```bash
+sudo dnf -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+```
+
+Start and enable Docker:
+
+```bash
+sudo systemctl --now enable docker
+```
+
+</details>
+
+<details>
+<summary>Podman – Rocky Linux (dnf)</summary>
+
+Enable EPEL repositories:
+
+```bash
+sudo dnf config-manager --set-enabled crb
+sudo dnf install epel-release
+```
+
+Install Podman and Podman Compose:
+
+```bash
+sudo dnf -y install podman podman-compose
+```
+
+</details>
+
+### Running Kanka-CE
+- Download the `docker-compose`, `.env.example`, and `gen-passwords.sh`, this can be simply done via:
+```bash
+git clone git@github.com:kinnewig/kanka-ce-container.git
+```
+
+- Enter the new folder and create a `.env` file by copying and adjusting `env.example`:
+```bash
+cp env.example .env
+```
+
+- Set strong passwords in the security section options of .env file by running the following bash script
 ```bash
 ./gen-passwords.sh
 ```
 
-- In case you are running rootfull
+- Create the persistent folder
 ```bash
-chown -R 1000:1000 </PATH/TO/kanka-community-edition>
+source .env
+mkdir -p ${KANKA_CE_DATA}/{kanka,mariadb,meilisearch}
+
+# Adjust the permissions (replace the User-ID with the user ID used by Docker, e.g., 999, ...)
+chown -R 1000:1000 ${KANKA_CE_DATA}
 ```
 
-- Prepare the container
-This is fully automated, just run the following command
+- Run Kanka-CE
 ```bash
-./prepare-kanka-ce.sh
+docker compose up -d
 ```
-If you do want to this manually you can follow the instaltion guide on the [manual install](https://github.com/kinnewig/kanka-community-edition/wiki/Installation#option-2-manual)
 
-- Preview
-You should now be able to preview Kanka-CE when you visit
-```bash
-http://localhost:8081
-```
-However, you should **not** publish that port to the internet. 
-Instead you should configure a reverse proxy pointing to that port.
+### Post installation
+You can access the web UI at http://localhost:80 (or a different port, in case you edited the .env file).
+It is strongly recommended to set up a reverse proxy.
+You can take this nginx configuration as a starting point. Just replace `{your-domain}.com` with your actual domain, and `{ip-of-your-kanka-ce-host}` with the local IP of the machine running Kanka CE.
 
-To login, you need to register a new account.
+<details>
+<summary>Example nginx configuration</summary>
 
-- Publish 
-Once you are satisfied with your configuration and ensured everything is safe, you are ready to publish your very own Kanka-CE!
-To do so, change in the .env:
-```bash
-APP_ENV=local
+```nginx
+server {
+    listen 80;
+    server_name kanka.{your-domain}.com;
+
+    # Redirect all HTTP requests to HTTPS
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name kanka.{your-domain}.com;
+
+    # To only allow local traffic, uncomment the following two lines:
+    #allow  192.168.1.0/24;
+    #deny   all;
+
+    # Restrict the maximal upload size, 0 means no restriction.
+    client_max_body_size 0;
+
+    add_header Strict-Transport-Security "max-age=15552000; includeSubDomains; preload;" always;
+
+    # SSL configuration
+    ssl_certificate /etc/letsencrypt/live/{your-domain}.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{your-domain}.com/privkey.pem;
+
+    # Reverse proxy to Kanka CE
+    location / {
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_pass http://{ip-of-your-kanka-ce-host}:8081;
+        proxy_redirect off;
+    }
+}
 ```
-to 
-```bash
-APP_ENV=production
-```
-You should consider restricting the registration, by either disable it completely, or allow registration only with an invitation password (which can be set in the `.env`).
+
+</details>
+
+- Note: Enable Premium for your world!
+  Premium is not enabled by default (yet), so you need to enable the premium features for your world by hand.
+
+
+## Development Guide
+
+For a detailed instruction how to run the the development build see the [Wiki page](https://github.com/kinnewig/kanka-community-edition/wiki/Development).
 
 ## Contributing
 
 Kanka Community Edition can only exist if the community helps build it.
-To get started, you can read the [contributing guide](https://github.com/kinnewig/kanka-community-edition/blob/develop-ce/CONTRIBUTING.md)
-or take a look at the [ToDo List](https://github.com/kinnewig/kanka-community-edition/blob/develop-ce/TODO.md).
+To get started, you can read the [contributing guide](https://github.com/kinnewig/kanka-community-edition/blob/nightly/CONTRIBUTING.md)
+or take a look at the [ToDo List](https://github.com/kinnewig/kanka-community-edition/nightly/develop-ce/TODO.md).
 
 This project is entirely maintained by volunteers, people who love Kanka, want to self‑host it, and believe in open collaboration. Every improvement, every fix, every idea comes from people like you. Kanka CE is still in an early stage, so help is apprichiated very much!
 
