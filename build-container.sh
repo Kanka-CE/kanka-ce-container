@@ -163,15 +163,6 @@ if ! parse_arguments "$@"; then
   exit 0
 fi
 
-
-# -- Prepare --
-# Final folder structure:
-# (after the downloads are finished)
-# ${BUILD_DIR}
-# ├── root/
-# ├── Kanka-CE/
-# └── Dockerfile
-
 cecho ${INFO} "Downloading..."
 
 # Check if git is installed
@@ -185,42 +176,6 @@ fi
 # Download the Dockerfile
 cecho ${INFO} "Download Dockerfile"
 git clone https://github.com/kanka-ce/docker-kanka-ce.git ${BUILD_DIR}
-cd ${BUILD_DIR}
-
-# Download Kanka-CE
-cecho ${INFO} "Download Kanka-CE"
-git clone ${GIT} Kanka-CE
-cd ${BUILD_DIR}/Kanka-CE
-
-# Checkout the version
-if [[ "$TARGET_VERSION" == "latest" ]]; then
-  # Search for latest version
-  TAG=$(git tag -l --sort=-v:refname | head -n 1)
-  cecho ${INFO} "Latest version: $TAG"
-else
-  TAG=${TARGET_VERSION}
-fi
-git checkout ${TAG}
-cecho ${GOOD} "Done!"
-echo "${TAG}" > ${TOOLS_ROOT}/build-version
-
-
-# -- Apply Patches --
-cecho ${INFO} "Replace Icons"
-if ! bash "$TOOLS_ROOT/patches/icons/replace-fontawesome.sh" "$TOOLS_ROOT" "." "$ICONS" "$@"; then
-  error "Icon replacement failed" 4
-fi
-cecho ${GOOD} "Done!"
-
-cecho ${INFO} "Apply patches"
-for file in $TOOLS_ROOT/patches/patch-files/*.patch; do
-    echo "  Apply: $file"
-    patch -p1 < "$file" || {
-        error "Patch $file failed" 4
-    }
-done
-cecho ${GOOD} "Done!"
-
 
 # -- Build Container --
 cd ${BUILD_DIR}
