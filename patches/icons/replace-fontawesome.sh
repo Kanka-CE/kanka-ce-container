@@ -270,12 +270,12 @@ translate_to_line_awesome() {
         fi
 
         # Replace <type> <name>
-        grep -RIl --exclude-dir=.git --exclude-dir=vendor --exclude-dir=tools "$search" ${KANKA_ROOT_DIR} | while read -r file; do
+        grep -RIl --exclude-dir=.git --exclude-dir=vendor --exclude-dir=tools --exclude-dir=ce-tools "$search" ${KANKA_ROOT_DIR} | while read -r file; do
             sed -Ei "s/${search}($|[^A-Za-z0-9-])/${replace}\1/g" "$file"
         done
 
         # Replace only <name> (for that case that any is left)
-        grep -RIl --exclude-dir=.git --exclude-dir=vendor --exclude-dir=tools "$fa_name" ${KANKA_ROOT_DIR} | while read -r file; do
+        grep -RIl --exclude-dir=.git --exclude-dir=vendor --exclude-dir=tools --exclude-dir=ce-tools "$fa_name" ${KANKA_ROOT_DIR} | while read -r file; do
             sed -Ei "s/$fa_name($|[^A-Za-z0-9-])/$la_name\1/g" "$file"
         done
 
@@ -284,7 +284,7 @@ translate_to_line_awesome() {
     # Replace only <type> (for that case that any is left)
     la_general_type="las"
     for TYPE in "${types[@]}"; do
-        grep -RIl --exclude-dir=.git --exclude-dir=vendor --exclude-dir=tools "$TYPE" ${KANKA_ROOT_DIR} | while read -r file; do
+        grep -RIl --exclude-dir=.git --exclude-dir=vendor --exclude-dir=tools --exclude-dir=ce-tools "$TYPE" ${KANKA_ROOT_DIR} | while read -r file; do
             sed -Ei "s/$TYPE($|[^A-Za-z0-9-])/$la_general_type\1/g" "$file"
         done
     done
@@ -385,14 +385,14 @@ translate_to_font_awesome_free() {
 
         # Replace <type> <name>
         if [[ "$search" != "$replace" ]]; then
-            grep -RIl --exclude-dir=.git --exclude-dir=vendor --exclude-dir=tools "$search" ${KANKA_ROOT_DIR} | while read -r file; do
+            grep -RIl --exclude-dir=.git --exclude-dir=vendor --exclude-dir=tools --exclude-dir=ce-tools "$search" ${KANKA_ROOT_DIR} | while read -r file; do
                 sed -Ei "s/${search}($|[^A-Za-z0-9-])/${replace}\1/g" "$file"
             done
         fi
 
         # Replace only <name> (for that case that any is left)
         if [[ "$fa_name" != "$fa_free_name" ]]; then
-            grep -RIl --exclude-dir=.git --exclude-dir=vendor --exclude-dir=tools "$fa_name" ${KANKA_ROOT_DIR} | while read -r file; do
+            grep -RIl --exclude-dir=.git --exclude-dir=vendor --exclude-dir=tools --exclude-dir=ce-tools "$fa_name" ${KANKA_ROOT_DIR} | while read -r file; do
                 sed -Ei "s/$fa_name($|[^A-Za-z0-9-])/$fa_free_name\1/g" "$file"
             done
         fi
@@ -402,13 +402,13 @@ translate_to_font_awesome_free() {
     # Replace fa_regular and fa_duotone that are left
     general_type="fa-solid"
     for TYPE in "${types[@]}"; do
-        grep -RIl --exclude-dir=.git --exclude-dir=vendor --exclude-dir=tools "$TYPE" ${KANKA_ROOT_DIR} | while read -r file; do
+        grep -RIl --exclude-dir=.git --exclude-dir=vendor --exclude-dir=tools --exclude-dir=ce-tools "$TYPE" ${KANKA_ROOT_DIR} | while read -r file; do
             sed -Ei "s/$TYPE($|[^A-Za-z0-9-])/$general_type\1/g" "$file"
         done
     done
 
     # Restore FA_REGULAR_LOCK -> fa_regular
-    grep -RIl --exclude-dir=.git --exclude-dir=vendor --exclude-dir=tools "FA_REGULAR_LOCK" ${KANKA_ROOT_DIR} |
+    grep -RIl --exclude-dir=.git --exclude-dir=vendor --exclude-dir=tools --exclude-dir=ce-tools "FA_REGULAR_LOCK" ${KANKA_ROOT_DIR} |
     while read -r file; do
         sed -Ei "s/FA_REGULAR_LOCK($|[^A-Za-z0-9-])/fa_regular\1/g" "$file"
     done
