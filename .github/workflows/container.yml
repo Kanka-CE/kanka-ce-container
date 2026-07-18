@@ -26,7 +26,6 @@ jobs:
       - name: Run build script
         run: |
           ./build-container.sh
-          echo "VERSION=$(cat build-version)" >> $GITHUB_ENV
 
       - name: Repository owner 
         run: echo "OWNER=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
@@ -35,7 +34,7 @@ jobs:
         run: |
           # version number
           podman tag kanka-ce:latest \
-            ghcr.io/${{ env.OWNER }}/kanka-ce:${{ env.VERSION }}
+            ghcr.io/${{ env.OWNER }}/kanka-ce:${{ github.event.client_payload.version }}
 
           # latest
             podman tag kanka-ce:latest \
@@ -44,7 +43,7 @@ jobs:
       - name: Push image
         run: |
           # version number
-          podman push ghcr.io/${{ env.OWNER }}/kanka-ce:${{ env.VERSION }}
+          podman push ghcr.io/${{ env.OWNER }}/kanka-ce:${{ github.event.client_payload.version }}
 
           # latest
           podman push ghcr.io/${{ env.OWNER }}/kanka-ce:latest
