@@ -169,6 +169,13 @@ server {
 Premium isn't enabled by default (yet), so you need to enable it by hand for each world.
 
 
+### Known issues
+[Bug during account creation:](https://github.com/Kanka-CE/kanka-ce-deploy/issues/4) After creating your account, you are redirected to the error page 500. 
+
+**Temporary workaround:** Just reload the page, which will bring you back to the login page, where you can log in with the newly created account.
+
+
+
 ## Contributing
 Kanka Community Edition and Kanka CE Tools can only exist if the community helps build them.
 To get started, you can read the [CONTRIBUTING.md](https://github.com/Kanka-CE/kanka-ce-container/blob/main/CONTRIBUTING.md). 
